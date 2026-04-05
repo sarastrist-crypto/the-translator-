@@ -17,6 +17,14 @@ const steps = [
   { id: 3, title: 'Elite Sync' }
 ];
 
+const UpgradeMarquee = ({ text }) => (
+  <div className="marquee-wrapper mb-4">
+    <div className="marquee-content">
+      {Array(10).fill(text).join(' • ')}
+    </div>
+  </div>
+);
+
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [step, setStep] = useState(0);
@@ -30,6 +38,7 @@ export default function App() {
     email: '',
     roles: [{
       category: 'Operations',
+      otherCategory: '',
       jobTitle: '',
       years: '1-2',
       responsibilities: ['', '', '']
@@ -63,13 +72,9 @@ export default function App() {
   }, [loading]);
 
   const onDrop = useCallback(acceptedFiles => {
-    if (!isElite) {
-      alert("Paywall: High-res Upload is an Elite Feature ($29.99). Switch to Manual Build below.");
-      return;
-    }
-    setUploadedFile(acceptedFiles[0]);
-    setStep(2);
-  }, [isElite]);
+    // Hard-locked for Elite only
+    setStep(4);
+  }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
     onDrop, 
@@ -91,12 +96,12 @@ export default function App() {
 
   const addRole = () => {
     if (!isElite) {
-      alert("Paywall: Multiple roles are an Elite Feature ($29.99). Try the manual 1-role build for free.");
+      setStep(4);
       return;
     }
     setFormData(prev => ({
       ...prev,
-      roles: [...prev.roles, { category: 'Operations', jobTitle: '', years: '1-2', responsibilities: ['', '', ''] }]
+      roles: [...prev.roles, { category: 'Operations', otherCategory: '', jobTitle: '', years: '1-2', responsibilities: ['', '', ''] }]
     }));
   };
 
@@ -130,10 +135,6 @@ export default function App() {
     if (uploadedFile) data.append('resume', uploadedFile);
 
     try {
-      // Mock call or real axios call
-      // const response = await axios.post('http://localhost:4000/api/translate', data);
-      
-      // Fallback logic for immediate result as user requested "free results"
       setTimeout(() => {
         setResults({
           resume: [
@@ -173,10 +174,10 @@ export default function App() {
           >
             <div className="splash-grain" />
             <motion.div 
-              initial={{ scale: 0, rotate: -45 }}
-              animate={{ scale: 1, rotate: 0 }}
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
-              className="splash-logo-container !w-32 !h-32 rounded-[2.5rem]"
+              className="splash-logo-container !w-32 !h-32 rounded-[2.5rem] rotating-sparkle"
             >
               <Sparkles size={72} fill="currentColor" />
             </motion.div>
@@ -190,15 +191,6 @@ export default function App() {
               >
                 THE <span className="text-amber-500">TRANSLATOR</span>
               </motion.h1>
-            </div>
-            
-            <div className="loading-bar w-64 mt-16 bg-white/5 h-2 rounded-full overflow-hidden">
-              <motion.div 
-                initial={{ width: 0 }}
-                animate={{ width: "100%" }}
-                transition={{ duration: 3.2, ease: "linear" }}
-                className="loading-progress h-full bg-gradient-vibrant" 
-              />
             </div>
           </motion.div>
         )}
@@ -236,14 +228,13 @@ export default function App() {
                  </motion.div>
 
                  <motion.div 
-                    {...getRootProps()}
+                    onClick={() => setStep(4)}
                     whileHover={{ scale: 1.03, y: -5 }}
-                    className={`card p-12 border-2 border-dashed cursor-pointer flex flex-col items-center justify-center transition-all relative ${isDragActive ? 'border-amber-500 bg-amber-500/5' : 'border-white/5 hover:border-amber-500/50'}`}
+                    className="card p-12 border-2 border-dashed border-white/5 cursor-pointer flex flex-col items-center justify-center transition-all relative hover:border-amber-500/50"
                  >
                     <div className="absolute top-6 right-6 bg-amber-500 text-black px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1">
                       <Lock size={10} /> ELITE
                     </div>
-                    <input {...getInputProps()} />
                     <UploadCloud size={72} className="text-amber-500/40 mb-8" />
                     <h3 className="text-3xl font-black mb-3 text-slate-500">Upload Current PDF</h3>
                     <p className="text-slate-600 text-lg">Full Elite Transformation ($2.99)</p>
@@ -270,7 +261,6 @@ export default function App() {
              <div className="card !p-16 border-l-8 border-amber-500">
                 <div className="flex items-center justify-between mb-12">
                    <h2 className="text-5xl font-black tracking-tighter">Your Identity</h2>
-                   {!isElite && <button onClick={() => setIsElite(true)} className="bg-amber-500/20 text-amber-500 hover:bg-amber-500 hover:text-black transition-all px-4 py-2 rounded-xl text-xs font-black">ACTIVATE ELITE</button>}
                 </div>
                 
                 <div className="space-y-10">
@@ -305,9 +295,6 @@ export default function App() {
              <div className="card !p-16">
                 <div className="flex items-center justify-between mb-12">
                    <h2 className="text-5xl font-black tracking-tighter">Hospitality Background</h2>
-                   <div className="flex items-center gap-2 text-slate-500 font-bold uppercase text-[10px]">
-                      {formData.roles.length} Role(s) Active
-                   </div>
                 </div>
 
                 <div className="space-y-16">
@@ -327,6 +314,16 @@ export default function App() {
                                    <option value="Hospitality Mgmt">Hospitality Mgmt</option>
                                    <option value="Other">Other</option>
                                 </select>
+                                {role.category === 'Other' && (
+                                  <motion.input 
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    className="input-field !p-4 mt-2" 
+                                    placeholder="Specify industry..." 
+                                    value={role.otherCategory} 
+                                    onChange={e => updateRole(rIndex, 'otherCategory', e.target.value)} 
+                                  />
+                                )}
                             </div>
                             <div className="space-y-4">
                                 <label className="text-xs font-black uppercase tracking-widest text-amber-500">Elite Title</label>
@@ -399,12 +396,14 @@ export default function App() {
                              <div className="absolute -top-10 -right-6 bg-gradient-vibrant p-4 rounded-3xl shadow-2xl rotate-12">
                                 <Receipt className="text-black" size={32} />
                              </div>
-                             <div className="flex items-center justify-between mb-12">
+                             <div className="flex items-center justify-between mb-8">
                                 <h3 className="text-4xl font-black tracking-tighter flex items-center gap-4">
                                     <FileText className="text-amber-500" size={32} /> Boardroom Strategy Points
                                 </h3>
-                                <span className="bg-amber-500/10 text-amber-500 px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-amber-500/20">Elite Performance Access</span>
                              </div>
+
+                             <UpgradeMarquee text="Elite Performance Access" />
+
                              <ul className="space-y-8">
                                 {results.resume.map((point, i) => (
                                     <li key={i} className="flex gap-6 p-8 bg-white/[0.03] rounded-3xl border border-white/5 hover:bg-white/[0.05] transition-all">
@@ -416,9 +415,12 @@ export default function App() {
                          </div>
 
                          <div className="card !p-12 border-l-4 border-blue-500">
-                             <h3 className="text-4xl font-black tracking-tighter mb-12 flex items-center gap-4">
+                             <h3 className="text-4xl font-black tracking-tighter mb-8 flex items-center gap-4">
                                 <Linkedin className="text-blue-500" size={32} /> Professional Narrative
                              </h3>
+                             
+                             <UpgradeMarquee text="Unlock Full Resume Package" />
+
                              <div className="p-10 bg-blue-500/[0.03] rounded-3xl border border-blue-500/10 text-2xl text-slate-100 font-bold leading-relaxed line-clamp-4">
                                 {results.linkedin}
                              </div>
@@ -444,28 +446,12 @@ export default function App() {
 
                                 <div className="w-full flex gap-2 mb-10">
                                    <div className="flex-1 aspect-[3/4] bg-white/5 rounded-lg border border-white/10 flex flex-col p-2 overflow-hidden shadow-2xl relative group">
-                                      <div className="w-full h-1 bg-white/20 mb-1" />
-                                      <div className="w-2/3 h-1 bg-white/10 mb-1" />
-                                      <div className="w-full h-1 bg-white/10 mb-1" />
-                                      <div className="w-full h-1 bg-white/10 mb-6" />
-                                      <div className="space-y-1">
-                                         <div className="w-full h-0.5 bg-white/5" />
-                                         <div className="w-full h-0.5 bg-white/5" />
-                                         <div className="w-4/5 h-0.5 bg-white/5" />
-                                      </div>
-                                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-2">
+                                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-2 z-10">
                                          <span className="text-[6px] font-black uppercase tracking-widest opacity-50">RESUME SILHOUETTE</span>
                                       </div>
                                    </div>
                                    <div className="flex-1 aspect-[3/4] bg-white/5 rounded-lg border border-white/10 flex flex-col p-2 overflow-hidden shadow-2xl relative">
-                                      <div className="w-1/2 h-2 bg-amber-500/20 mb-4" />
-                                      <div className="space-y-1">
-                                         <div className="w-full h-0.5 bg-white/5" />
-                                         <div className="w-full h-0.5 bg-white/5" />
-                                         <div className="w-full h-0.5 bg-white/5" />
-                                         <div className="w-3/4 h-0.5 bg-white/5" />
-                                      </div>
-                                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-2">
+                                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-2 z-10">
                                          <span className="text-[6px] font-black uppercase tracking-widest opacity-50">COVER LETTER VIEW</span>
                                       </div>
                                    </div>
@@ -504,13 +490,20 @@ export default function App() {
                            </div>
                         </div>
 
-                        <div className="mt-12 bg-slate-100 p-8 rounded-[2rem] border border-slate-200 space-y-6">
-                             <input className="w-full p-5 border border-slate-300 rounded-2xl bg-white focus:ring-4 ring-amber-500/20 font-bold" placeholder="Card Number" />
-                             <div className="grid grid-cols-2 gap-4">
-                                 <input className="p-5 border border-slate-300 rounded-2xl bg-white focus:ring-4 ring-amber-500/20 font-bold" placeholder="MM/YY" />
-                                 <input className="p-5 border border-slate-300 rounded-2xl bg-white focus:ring-4 ring-amber-500/20 font-bold" placeholder="CVC" />
+                        <div className="mt-12 space-y-4">
+                             <div className="bg-slate-100 p-8 rounded-[2rem] border border-slate-200 space-y-4">
+                                 <input className="w-full p-5 border border-slate-300 rounded-2xl bg-white focus:ring-4 ring-amber-500/20 font-bold" placeholder="Card Number" />
+                                 <div className="grid grid-cols-2 gap-4">
+                                     <input className="p-5 border border-slate-300 rounded-2xl bg-white focus:ring-4 ring-amber-500/20 font-bold" placeholder="MM/YY" />
+                                     <input className="p-5 border border-slate-300 rounded-2xl bg-white focus:ring-4 ring-amber-500/20 font-bold" placeholder="CVC" />
+                                 </div>
+                                 <button className="w-full bg-slate-900 text-white py-6 rounded-2xl font-black text-2xl hover:bg-black transition-all shadow-xl">SECURE ACCESS</button>
                              </div>
-                             <button className="w-full bg-slate-900 text-white py-6 rounded-2xl font-black text-2xl hover:bg-black transition-all shadow-xl">SECURE ACCESS</button>
+                             
+                             <button className="google-pay-btn">
+                                <span className="text-white text-xl">Pay with</span>
+                                <span className="font-black text-2xl tracking-tighter">Google Pay</span>
+                             </button>
                         </div>
                     </div>
                     <div className="md:col-span-2 p-16 bg-amber-500 flex flex-col items-center justify-center text-center text-black">
