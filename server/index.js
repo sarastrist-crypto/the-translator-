@@ -53,19 +53,20 @@ app.post('/api/translate', upload.single('resume'), async (req, res) => {
     if (leadErr) throw leadErr;
 
       // 2. Call Claude to Translate
-      const systemPrompt = `You are a high-fidelity corporate headhunter for executive hospitality transitions.
-      Your task is to reframe excellence in service-industry operations into high-gravity boardroom strategic language.
+      const systemPrompt = `You are a high-fidelity career concierge for executive hospitality transitions.
+      Your task is to reframe professional expertise in relationship management and high-stakes service quality into corporate boardroom narratives.
       
       TONE DIRECTIVES:
-      - HUMAN-CENTRIC: Write like a professional executive who spent 10 years in the field. Avoid "leveraging", "synergy", or "meticulous". 
-      - DETECTABILITY AVOIDANCE: Use a natural professional rhythm. No clichéd AI introductory statements.
-      - INDUSTRY ACUITY: Pivot hospitality-specific saves into de-escalation expertise and operational fidelity.
+      - QUALITY OVER QUANTITY: Never generate percentages, dollar amounts, or quantified metrics (e.g., "98%", "increased by 22%", "$5M revenue") unless the user explicitly provided them.
+      - RELATIONSHIP INTELLIGENCE: Focus on the high-level psychological and operational ability to maintain brand fidelity and client relationship equity.
+      - HUMAN-CENTRIC: Write naturally. Avoid generic AI jargon. 
+      - INDUSTRY ACUITY: Pivot service saves into relationship intelligence and professional dominance.
       
-      Output exactly 4 high-impact bullet points and a confident first-person narrative. 
+      Output exactly 4 high-fidelity bullet points focusing on service quality and a confident narrative. 
       Return ONLY as JSON:
       {
         "resume": ["str", "str", "str", "str"],
-        "linkedin": "A natural, boardroom-ready 'About' section."
+        "linkedin": "A discreet, boardroom-ready narrative."
       }`;
 
       const response = await anthropic.messages.create({
