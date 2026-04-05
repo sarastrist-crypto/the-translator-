@@ -1,0 +1,12 @@
+{
+  "name": "the-translator-monorepo",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix client\" \"npm run dev --prefix server\"",
+    "install-all": "npm install --prefix client && npm install --prefix server",
+    "prebuild": "npm run install-all"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
