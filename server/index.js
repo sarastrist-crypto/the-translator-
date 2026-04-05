@@ -52,34 +52,28 @@ app.post('/api/translate', upload.single('resume'), async (req, res) => {
 
     if (leadErr) throw leadErr;
 
-    // 2. Call Claude to Translate
-    const prompt = `
-      You are an elite career strategist for hospitality workers transition to high-level corporate roles.
+      // 2. Call Claude to Translate
+      const systemPrompt = `You are a high-fidelity corporate headhunter for executive hospitality transitions.
+      Your task is to reframe excellence in service-industry operations into high-gravity boardroom strategic language.
       
-      User Info:
-      Target Role: ${jobTitle}
-      Years: ${years}
-      Manual Inputs: ${responsibilities.join(', ')}
-      ${resumeText ? `Uploaded Resume Text: ${resumeText}` : ''}
-
-      Guidelines:
-      - Transform service industry skills (high-volume, high-pressure, service excellence) into corporate power descriptors (operational efficiency, de-escalation, service delivery management, client retention).
-      - Reframe the "Shift Hustle" into "Strategic Corporate Dominance."
-      - Output exactly 4 powerful resume bullet points.
-      - Output a LinkedIn "About" section (3-4 sentences in first person, confident, modern, not stiff).
-
-      Format response as JSON:
+      TONE DIRECTIVES:
+      - HUMAN-CENTRIC: Write like a professional executive who spent 10 years in the field. Avoid "leveraging", "synergy", or "meticulous". 
+      - DETECTABILITY AVOIDANCE: Use a natural professional rhythm. No clichéd AI introductory statements.
+      - INDUSTRY ACUITY: Pivot hospitality-specific saves into de-escalation expertise and operational fidelity.
+      
+      Output exactly 4 high-impact bullet points and a confident first-person narrative. 
+      Return ONLY as JSON:
       {
         "resume": ["str", "str", "str", "str"],
-        "linkedin": "str"
-      }
-    `;
+        "linkedin": "A natural, boardroom-ready 'About' section."
+      }`;
 
-    const response = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-latest',
-      max_tokens: 1500,
-      messages: [{ role: 'user', content: prompt }],
-    });
+      const response = await anthropic.messages.create({
+        model: 'claude-3-5-sonnet-latest',
+        max_tokens: 1500,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: `Target: ${jobTitle}. Inputs: ${responsibilities.join(', ')}. ${resumeText ? `Resume: ${resumeText}` : ''}` }],
+      });
 
     const results = JSON.parse(response.content[0].text);
 
@@ -103,16 +97,14 @@ app.post('/api/translate', upload.single('resume'), async (req, res) => {
   }
 });
 
-// Elite Transformation Endpoint (Paywall Placeholder)
+// Elite Transformation Endpoint
 app.post('/api/elite-checkout', async (req, res) => {
     const { email } = req.body;
     try {
-        // Here we would normally create a Stripe checkout session
-        // For this demo, we'll simulate a successful " Elite" order creation
-        console.log(`Elite Checkout initiated for ${email}`);
-        res.json({ success: true, message: 'Processing your Elite Transformation PDF generation.' });
+        console.log(`Elite Transformation ($2.99) initiated for ${email}`);
+        res.json({ success: true, message: 'Processing your Boardroom Elite Portfolio generation.' });
     } catch (err) {
-        res.status(500).json({ error: 'Payment processing failed.' });
+        res.status(500).json({ error: 'Elite payment processing failed.' });
     }
 });
 

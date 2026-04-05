@@ -61,14 +61,13 @@ body {
 
 /* Glassmorphism Cards */
 .card {
-  background: var(--color-surface);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-xl);
-  padding: 2.5rem;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-  transition: var(--transition-smooth);
+  border-radius: 2.5rem;
+  padding: 3rem;
+  box-shadow: var(--shadow-card);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.4s ease;
   position: relative;
   overflow: hidden;
 }
@@ -92,21 +91,22 @@ body {
 
 /* Buttons that POP */
 .btn-primary {
-  position: relative;
+  background: var(--gradient-vibrant);
+  color: #030712;
+  font-weight: 800;
+  padding: 1.25rem 2.5rem;
+  border-radius: 1.25rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem 2.5rem;
-  background: var(--gradient-vibrant);
-  color: #030712;
-  border-radius: var(--radius-full);
-  font-weight: 700;
-  font-size: 1.125rem;
-  text-decoration: none;
-  transition: var(--transition-smooth);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-glow);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 1.1rem;
+  width: 100%;
   border: none;
   cursor: pointer;
-  box-shadow: 0 10px 25px rgba(245, 158, 11, 0.4);
   z-index: 1;
 }
 

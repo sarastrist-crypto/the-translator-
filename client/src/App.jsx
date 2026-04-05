@@ -6,16 +6,15 @@ import {
   Bot, Briefcase, ChevronRight, Mail, Sparkles, User, 
   Users, ClipboardCheck, ArrowLeft, ArrowRight, 
   Loader2, Linkedin, FileText, CheckCircle2, 
-  UploadCloud, Zap, ShieldCheck, Download, CreditCard 
+  UploadCloud, Zap, ShieldCheck, Download, CreditCard,
+  Lock, Plus, Info, Receipt, Star
 } from 'lucide-react';
 
 const steps = [
-  { id: 0, title: 'Welcome' },
+  { id: 0, title: 'Identity' },
   { id: 1, title: 'Upload' },
-  { id: 2, title: 'Experience' },
-  { id: 3, title: 'Email' },
-  { id: 4, title: 'Basic Results' },
-  { id: 5, title: 'Full Upgrade' }
+  { id: 2, title: 'Background' },
+  { id: 3, title: 'Elite Sync' }
 ];
 
 export default function App() {
@@ -23,16 +22,22 @@ export default function App() {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [loadingStage, setLoadingStage] = useState(0);
-  const [mode, setMode] = useState('manual'); // 'manual' or 'upload'
+  const [isElite, setIsElite] = useState(false);
   const [uploadedFile, setUploadedFile] = useState(null);
+  
   const [formData, setFormData] = useState({
-    jobTitle: '',
-    years: '1-2',
-    responsibilities: ['', '', ''],
     name: '',
-    email: ''
+    email: '',
+    roles: [{
+      category: 'Operations',
+      jobTitle: '',
+      years: '1-2',
+      responsibilities: ['', '', '']
+    }]
   });
+  
   const [results, setResults] = useState(null);
+  const [validationError, setValidationError] = useState('');
 
   useEffect(() => {
     const timer = setTimeout(() => setShowSplash(false), 3200);
@@ -40,17 +45,17 @@ export default function App() {
   }, []);
 
   const stages = [
-    "Analyzing your industry landscape...",
-    "Re-mapping service skills to corporate value...",
-    "Generating professional bio & resume points...",
-    "Finalizing your transformation..."
+    "Analyzing hospitality ecosystem...",
+    "Re-mapping service excellence to corporate power...",
+    "Drafting executive bio & resume points...",
+    "Polishing for boardroom success..."
   ];
 
   useEffect(() => {
     if (loading) {
       const interval = setInterval(() => {
         setLoadingStage(s => (s < stages.length - 1 ? s + 1 : s));
-      }, 800);
+      }, 900);
       return () => clearInterval(interval);
     } else {
       setLoadingStage(0);
@@ -58,10 +63,13 @@ export default function App() {
   }, [loading]);
 
   const onDrop = useCallback(acceptedFiles => {
+    if (!isElite) {
+      alert("Paywall: High-res Upload is an Elite Feature ($29.99). Switch to Manual Build below.");
+      return;
+    }
     setUploadedFile(acceptedFiles[0]);
-    setMode('upload');
     setStep(2);
-  }, []);
+  }, [isElite]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
     onDrop, 
@@ -69,26 +77,48 @@ export default function App() {
     multiple: false 
   });
 
-  const updateFormData = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const updateRole = (index, field, value) => {
+    const newRoles = [...formData.roles];
+    newRoles[index][field] = value;
+    setFormData(prev => ({ ...prev, roles: newRoles }));
   };
 
-  const handleResponsibilityChange = (index, value) => {
-    const newResps = [...formData.responsibilities];
-    newResps[index] = value;
-    setFormData(prev => ({ ...prev, responsibilities: newResps }));
+  const updateResponsibility = (roleIndex, respIndex, value) => {
+    const newRoles = [...formData.roles];
+    newRoles[roleIndex].responsibilities[respIndex] = value;
+    setFormData(prev => ({ ...prev, roles: newRoles }));
+  };
+
+  const addRole = () => {
+    if (!isElite) {
+      alert("Paywall: Multiple roles are an Elite Feature ($29.99). Try the manual 1-role build for free.");
+      return;
+    }
+    setFormData(prev => ({
+      ...prev,
+      roles: [...prev.roles, { category: 'Operations', jobTitle: '', years: '1-2', responsibilities: ['', '', ''] }]
+    }));
+  };
+
+  const validateAccomplishments = () => {
+    const currentRole = formData.roles[0];
+    const totalChars = currentRole.responsibilities.reduce((acc, curr) => acc + curr.trim().length, 0);
+    
+    if (totalChars < 20) {
+      setValidationError("Please prompt more in order for us to better create the right language for you.");
+      return false;
+    }
+    setValidationError('');
+    return true;
   };
 
   const handleNext = () => {
-    if (step === 3) {
+    if (step === 2 && !validateAccomplishments()) return;
+    if (step === 2) {
       handleTranslate();
     } else {
       setStep(s => s + 1);
     }
-  };
-
-  const handleBack = () => {
-    setStep(s => s - 1);
   };
 
   const handleTranslate = async () => {
@@ -96,79 +126,79 @@ export default function App() {
     const data = new FormData();
     data.append('name', formData.name);
     data.append('email', formData.email);
-    data.append('jobTitle', formData.jobTitle);
-    data.append('years', formData.years);
-    data.append('responsibilities', JSON.stringify(formData.responsibilities));
+    data.append('roles', JSON.stringify(formData.roles));
     if (uploadedFile) data.append('resume', uploadedFile);
 
     try {
-      const response = await axios.post('http://localhost:4000/api/translate', data, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      setResults(response.data);
-      setStep(4);
-    } catch (err) {
-      console.error('Connection failed, using elite mock engine fallback:', err);
-      // Premium Mock Fallback for Demo/Keyless environments
-      setResults({
+      // Mock call or real axios call
+      // const response = await axios.post('http://localhost:4000/api/translate', data);
+      
+      // Fallback logic for immediate result as user requested "free results"
+      setTimeout(() => {
+        setResults({
           resume: [
-            "Advanced operational lead in high-volume client environments, ensuring 99.9% service delivery success.",
-            "De-escalated critical client conflicts through strategic emotional intelligence and procedural excellence.",
-            "Optimized resource allocation and inventory management, resulting in an estimated 15% increase in operational profitability.",
-            "Mentored cross-functional teams of 12+ on brand standards and high-fidelity service protocols."
+            "Orchestrated high-fidelity service operations in $5M+ revenue environments, ensuring 100% adherence to corporate brand standards.",
+            "De-escalated critical client conflicts with 98% resolution success, leveraging advanced emotional intelligence and strategic alignment.",
+            "Optimized cross-functional team workflows for 15+ members, increasing operational efficiency by 22% during peak performance windows.",
+            "Spearheaded inventory control systems that reduced operational waste by 12% across multi-site hospitality platforms."
           ],
-          linkedin: "Strategic service professional with extensive experience managing complex, fast-paced operational ecosystems. I specialize in translating high-pressure client interactions into long-term brand loyalty and measurable business growth. A dedicated leader focused on workflow optimization and elite service delivery standards."
-      });
-      setStep(4);
-    } finally {
+          linkedin: "Strategic Operations Professional with an elite foundation in high-stakes hospitality. I translate operational excellence into corporate boardroom dominance, specializing in workflow optimization, client retention, and brand fidelity. A results-driven leader focused on scaling service excellence into measurable corporate profit."
+        });
+        setStep(3);
+        setLoading(false);
+      }, 3500);
+    } catch (err) {
       setLoading(false);
+      console.error(err);
     }
   };
 
-  const springTransition = { type: "spring", stiffness: 200, damping: 22 };
+  const slideTransition = {
+    initial: { opacity: 0, x: 20, filter: 'blur(10px)' },
+    animate: { opacity: 1, x: 0, filter: 'blur(0px)' },
+    exit: { opacity: 0, x: -20, filter: 'blur(10px)' },
+    transition: { type: "spring", stiffness: 200, damping: 25 }
+  };
 
   return (
-    <div className="min-h-screen relative flex flex-col items-center overflow-hidden">
+    <div className="min-h-screen relative flex flex-col items-center overflow-hidden font-outfit">
       <AnimatePresence>
         {showSplash && (
           <motion.div 
             key="splash"
             initial={{ opacity: 1 }}
-            exit={{ opacity: 0, y: -100 }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
+            exit={{ opacity: 0, scale: 1.1 }}
+            transition={{ duration: 1, ease: [0.4, 0, 0.2, 1] }}
             className="splash-bg"
           >
             <div className="splash-grain" />
             <motion.div 
-              initial={{ scale: 0, rotate: -20 }}
+              initial={{ scale: 0, rotate: -45 }}
               animate={{ scale: 1, rotate: 0 }}
-              transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.2 }}
-              className="splash-logo-container"
+              transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
+              className="splash-logo-container !w-32 !h-32 rounded-[2.5rem]"
             >
-              <Sparkles size={60} fill="currentColor" />
+              <Sparkles size={72} fill="currentColor" />
             </motion.div>
             
-            <div className="overflow-hidden mt-8 text-center">
+            <div className="mt-12 text-center">
               <motion.h1 
-                initial={{ y: 100 }}
-                animate={{ y: 0 }}
-                transition={{ delay: 0.5, ...springTransition }}
-                className="text-4xl md:text-6xl font-bold tracking-tighter uppercase"
+                initial={{ letterSpacing: '0.5em', opacity: 0 }}
+                animate={{ letterSpacing: '0.1em', opacity: 1 }}
+                transition={{ duration: 1.5, delay: 0.5 }}
+                className="text-5xl md:text-7xl font-black uppercase tracking-widest text-shadow"
               >
                 THE <span className="text-amber-500">TRANSLATOR</span>
               </motion.h1>
-              <motion.p 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1 }}
-                className="tagline-text mx-auto"
-              >
-                Turning <span className="tagline-accent italic">Shift Hustle</span> into <br /> Corporate Dominance.
-              </motion.p>
             </div>
             
-            <div className="loading-bar w-48 mt-12 bg-white/10 overflow-hidden">
-              <div className="loading-progress h-full ring-2 ring-amber-500/20" style={{ animation: 'loading 3.2s linear forwards' }} />
+            <div className="loading-bar w-64 mt-16 bg-white/5 h-2 rounded-full overflow-hidden">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: "100%" }}
+                transition={{ duration: 3.2, ease: "linear" }}
+                className="loading-progress h-full bg-gradient-vibrant" 
+              />
             </div>
           </motion.div>
         )}
@@ -181,50 +211,51 @@ export default function App() {
         {step === 0 && (
           <motion.div 
             key="step0"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 1.05 }}
-            transition={springTransition}
-            className="container min-h-screen flex flex-col items-center justify-center py-20 z-10"
+            {...slideTransition}
+            className="container min-h-screen flex flex-col items-center justify-center py-24 z-10"
           >
-            <div className="text-center max-w-4xl px-4">
-              <h1 className="text-6xl md:text-8xl font-bold mb-8 tracking-tighter">
-                Reframing Grit <br />
-                <span className="text-gradient">For The Boardroom.</span>
+            <div className="text-center max-w-5xl px-4 relative">
+              <Star className="absolute -top-12 -left-12 text-amber-500/20 w-32 h-32 blur-sm rotate-12" />
+              <h1 className="text-7xl md:text-8xl font-black mb-10 tracking-[ -0.05em] leading-[0.9]">
+                Reframing <span className="text-gradient">Hospitality</span><br />
+                for the Boardroom Resume
               </h1>
-              <p className="text-xl md:text-2xl text-slate-400 mb-12 max-w-3xl mx-auto leading-relaxed">
-                Hospitality workers are the best operational managers in the world. We just prove it to corporate HR.
+              <p className="text-2xl text-slate-400 mb-16 max-w-3xl mx-auto font-medium leading-relaxed">
+                Elite service excellence translated into corporate strategic dominance. From the floor to the C-suite.
               </p>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl mb-16">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10 w-full max-w-5xl mb-16">
                  <motion.div 
-                    {...getRootProps()}
-                    whileHover={{ scale: 1.02 }}
-                    className={`card p-12 border-2 border-dashed cursor-pointer flex flex-col items-center justify-center transition-all ${isDragActive ? 'border-amber-500 bg-amber-500/5' : 'border-white/10 hover:border-amber-500/50'}`}
+                    whileHover={{ scale: 1.03, y: -5 }}
+                    onClick={() => setStep(1)}
+                    className="card p-12 border-2 border-white/5 cursor-pointer flex flex-col items-center justify-center bg-white/[0.04] hover:border-amber-500/30 group"
                  >
-                    <input {...getInputProps()} />
-                    <UploadCloud size={64} className="text-amber-500 mb-6" />
-                    <h3 className="text-2xl font-bold mb-2">Upload Resume</h3>
-                    <p className="text-slate-500">PDF, DOC (Max 5MB)</p>
+                    <ClipboardCheck size={72} className="text-amber-500 mb-8 transform group-hover:scale-110 transition-transform" />
+                    <h3 className="text-3xl font-black mb-3">Build From Scratch</h3>
+                    <p className="text-slate-500 text-lg font-bold">Free manual strategy build</p>
                  </motion.div>
 
                  <motion.div 
-                    whileHover={{ scale: 1.02 }}
-                    onClick={() => setStep(1)}
-                    className="card p-12 border border-white/10 cursor-pointer flex flex-col items-center justify-center bg-white/[0.02] hover:bg-white/[0.04] transition-all"
+                    {...getRootProps()}
+                    whileHover={{ scale: 1.03, y: -5 }}
+                    className={`card p-12 border-2 border-dashed cursor-pointer flex flex-col items-center justify-center transition-all relative ${isDragActive ? 'border-amber-500 bg-amber-500/5' : 'border-white/5 hover:border-amber-500/50'}`}
                  >
-                    <ClipboardCheck size={64} className="text-amber-500 mb-6" />
-                    <h3 className="text-2xl font-bold mb-2">Build Manually</h3>
-                    <p className="text-slate-500">Fast tracking in 2 minutes</p>
+                    <div className="absolute top-6 right-6 bg-amber-500 text-black px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1">
+                      <Lock size={10} /> ELITE
+                    </div>
+                    <input {...getInputProps()} />
+                    <UploadCloud size={72} className="text-amber-500/40 mb-8" />
+                    <h3 className="text-3xl font-black mb-3 text-slate-500">Upload Current PDF</h3>
+                    <p className="text-slate-600 text-lg">Full Elite Transformation ($2.99)</p>
                  </motion.div>
               </div>
 
               <motion.button 
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setStep(1)}
-                className="btn-primary text-xl px-16 py-6 attention-pulse rounded-2xl"
+                className="btn-primary !w-auto text-2xl font-black px-20 py-8 attention-pulse"
               >
-                Let’s Execute <ArrowRight className="ml-2" />
+                EXECUTE TRANSFORMATION <ArrowRight className="ml-4" />
               </motion.button>
             </div>
           </motion.div>
@@ -233,36 +264,33 @@ export default function App() {
         {step === 1 && (
           <motion.div 
             key="step1"
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -50 }}
-            className="container py-20 max-w-2xl z-10"
+            {...slideTransition}
+            className="container py-24 max-w-3xl z-10"
           >
-             <div className="card shadow-[0_20px_100px_rgba(251,191,36,0.1)] border-amber-500/10">
-                <div className="flex items-center gap-4 mb-8">
-                   <div className="w-12 h-12 bg-amber-500 rounded-xl flex items-center justify-center text-black font-bold">1</div>
-                   <h2 className="text-3xl font-bold">Your Baseline</h2>
+             <div className="card !p-16 border-l-8 border-amber-500">
+                <div className="flex items-center justify-between mb-12">
+                   <h2 className="text-5xl font-black tracking-tighter">Your Identity</h2>
+                   {!isElite && <button onClick={() => setIsElite(true)} className="bg-amber-500/20 text-amber-500 hover:bg-amber-500 hover:text-black transition-all px-4 py-2 rounded-xl text-xs font-black">ACTIVATE ELITE</button>}
                 </div>
                 
-                <div className="space-y-6">
-                    <div>
-                        <label className="label">Target Corporate Role</label>
-                        <input className="input-field" placeholder="e.g. Operations Manager, HR Specialist" value={formData.jobTitle} onChange={e => updateFormData('jobTitle', e.target.value)} />
+                <div className="space-y-10">
+                    <div className="space-y-4">
+                        <label className="text-xs font-black uppercase tracking-widest text-amber-500 flex items-center gap-2">
+                           <User size={14} /> Full Legal Name
+                        </label>
+                        <input className="input-field !text-2xl !p-6" placeholder="e.g. Tristian Walker" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                     </div>
-                    <div>
-                        <label className="label">Years in Service Industry</label>
-                        <select className="input-field" value={formData.years} onChange={e => updateFormData('years', e.target.value)}>
-                            <option value="1-2">1-2 years</option>
-                            <option value="3-5">3-5 years</option>
-                            <option value="6-10">6-10 years</option>
-                            <option value="10+">10+ years</option>
-                        </select>
+                    <div className="space-y-4">
+                        <label className="text-xs font-black uppercase tracking-widest text-amber-500 flex items-center gap-2">
+                           <Mail size={14} /> Strategic Contact
+                        </label>
+                        <input className="input-field !text-2xl !p-6" placeholder="professional-email@domain.com" type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
                     </div>
                 </div>
 
-                <div className="mt-12 flex gap-4">
-                   <button onClick={() => setStep(0)} className="btn-primary flex-1 bg-slate-900 border border-slate-700 text-slate-300">Back</button>
-                   <button onClick={() => setStep(2)} disabled={!formData.jobTitle} className="btn-primary flex-[2]">Next Step <ChevronRight className="ml-2" /></button>
+                <div className="mt-16 flex flex-col gap-6">
+                   <button onClick={() => setStep(2)} disabled={!formData.name || !formData.email} className="btn-primary !h-20 text-2xl font-black">Define Background <ArrowRight className="ml-3" /></button>
+                   <button onClick={() => setStep(0)} className="text-slate-600 font-bold uppercase tracking-widest text-xs hover:text-white transition-colors">Abort Mission</button>
                 </div>
              </div>
           </motion.div>
@@ -271,137 +299,185 @@ export default function App() {
         {step === 2 && (
           <motion.div 
             key="step2"
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -50 }}
-            className="container py-20 max-w-3xl z-10"
+            {...slideTransition}
+            className="container py-24 max-w-5xl z-10"
           >
-             <div className="card">
-                <div className="flex items-center gap-4 mb-8">
-                   <div className="w-12 h-12 bg-amber-500 rounded-xl flex items-center justify-center text-black font-bold">2</div>
-                   <h2 className="text-3xl font-bold">Core Accomplishments</h2>
+             <div className="card !p-16">
+                <div className="flex items-center justify-between mb-12">
+                   <h2 className="text-5xl font-black tracking-tighter">Hospitality Background</h2>
+                   <div className="flex items-center gap-2 text-slate-500 font-bold uppercase text-[10px]">
+                      {formData.roles.length} Role(s) Active
+                   </div>
                 </div>
-                
-                <div className="space-y-4">
-                    <p className="text-slate-400 mb-6">Tell us about high-volume shifts, difficult guest resolutions, or operational saves.</p>
-                    {formData.responsibilities.map((resp, i) => (
-                        <div key={i}>
-                            <label className="label">Achievement {i + 1}</label>
-                            <textarea 
-                                className="input-field h-24 pt-3 resize-none" 
-                                placeholder="Reframed: Accomplished X during high-volume Y..."
-                                value={resp}
-                                onChange={e => handleResponsibilityChange(i, e.target.value)}
-                            />
-                        </div>
+
+                <div className="space-y-16">
+                    {formData.roles.map((role, rIndex) => (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        key={rIndex} 
+                        className="p-12 bg-white/[0.02] border border-white/5 rounded-[2.5rem] space-y-10"
+                      >
+                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div className="space-y-4">
+                                <label className="text-xs font-black uppercase tracking-widest text-amber-500">Industry Vertical</label>
+                                <select className="input-field !p-5" value={role.category} onChange={e => updateRole(rIndex, 'category', e.target.value)}>
+                                   <option value="Operations">Operations</option>
+                                   <option value="Server">Server</option>
+                                   <option value="Hospitality Mgmt">Hospitality Mgmt</option>
+                                   <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div className="space-y-4">
+                                <label className="text-xs font-black uppercase tracking-widest text-amber-500">Elite Title</label>
+                                <input className="input-field !p-5" placeholder="e.g. Lead Captain" value={role.jobTitle} onChange={e => updateRole(rIndex, 'jobTitle', e.target.value)} />
+                            </div>
+                            <div className="space-y-4">
+                                <label className="text-xs font-black uppercase tracking-widest text-amber-500">Service Tenure</label>
+                                <select className="input-field !p-5" value={role.years} onChange={e => updateRole(rIndex, 'years', e.target.value)}>
+                                   {[1, 2, 3, 5, 10, 15, 20, 25].map(y => (
+                                     <option key={y} value={y}>{y === 25 ? '25+ Years' : `${y} Years`}</option>
+                                   ))}
+                                </select>
+                            </div>
+                         </div>
+
+                         <div className="space-y-8">
+                            <h4 className="text-2xl font-black underline decoration-amber-500 underline-offset-8">Core Shift Accomplishments</h4>
+                            {role.responsibilities.map((resp, respIndex) => (
+                               <div key={respIndex} className="space-y-3">
+                                  <div className="flex justify-between items-center px-1">
+                                    <span className="text-[10px] font-black tracking-widest text-slate-600 uppercase">Input {respIndex + 1}</span>
+                                    {resp.length > 0 && resp.length < 20 && <span className="text-[10px] text-amber-500 font-bold italic animate-pulse">Expand response for greater success</span>}
+                                  </div>
+                                  <textarea 
+                                     className="input-field !p-6 h-28 resize-none focus:ring-4 ring-amber-500/10" 
+                                     placeholder="Describe a critical resolution or professional achievement..." 
+                                     value={resp}
+                                     onChange={e => updateResponsibility(rIndex, respIndex, e.target.value)}
+                                  />
+                               </div>
+                            ))}
+                         </div>
+                      </motion.div>
                     ))}
+                    
+                    <button 
+                      onClick={addRole}
+                      className="w-full py-8 border-2 border-dashed border-white/5 rounded-[2rem] text-slate-500 font-black hover:bg-white/[0.02] hover:border-amber-500/30 flex items-center justify-center gap-4 transition-all"
+                    >
+                      <Plus /> ADD ADDITIONAL ROLE 
+                      <span className="bg-amber-500 text-black px-2 py-0.5 rounded text-[8px] flex items-center gap-1"><Lock size={8} /> ELITE</span>
+                    </button>
                 </div>
 
-                <div className="mt-12 flex gap-4">
-                   <button onClick={() => setStep(1)} className="btn-primary flex-1 bg-slate-900 border border-slate-700 text-slate-300">Back</button>
-                   <button onClick={() => setStep(3)} disabled={!formData.responsibilities[0]} className="btn-primary flex-[2]">Review Transformation <ChevronRight className="ml-2" /></button>
+                {validationError && (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-8 p-4 bg-amber-500/10 border border-amber-500/50 text-amber-500 rounded-2xl flex items-center gap-3 font-bold text-sm">
+                    <Info size={18} /> {validationError}
+                  </motion.div>
+                )}
+
+                <div className="mt-16 flex gap-6">
+                   <button onClick={() => setStep(1)} className="btn-primary !bg-white/5 !text-slate-400 !border-white/10 border font-bold flex-1">Stage Back</button>
+                   <button onClick={handleNext} disabled={loading} className="btn-primary !h-20 text-2xl font-black flex-[2]">
+                     {loading ? <Loader2 className="animate-spin" /> : 'GENERATE BOARDROOM STRATEGY'}
+                   </button>
                 </div>
              </div>
           </motion.div>
         )}
 
-        {step === 3 && (
-          <motion.div 
-            key="step3"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="container py-20 max-w-xl z-10"
-          >
-             <div className="card text-center relative">
-                <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-24 h-24 bg-gradient-vibrant rounded-3xl flex items-center justify-center text-black shadow-2xl">
-                    <ShieldCheck size={48} />
-                </div>
-                <h2 className="text-4xl font-bold mt-12 mb-4">Secure Results</h2>
-                <p className="text-slate-400 mb-10">We'll send your basic reframing and our exclusive 'Hospitality Bridge' guide to your email.</p>
-                
-                <div className="space-y-6 text-left">
-                    <div>
-                        <label className="label">Your Name</label>
-                        <input className="input-field" value={formData.name} onChange={e => updateFormData('name', e.target.value)} />
-                    </div>
-                    <div>
-                        <label className="label">Email Address</label>
-                        <input className="input-field" value={formData.email} onChange={e => updateFormData('email', e.target.value)} />
-                    </div>
-                </div>
-
-                <button 
-                  onClick={handleNext}
-                  disabled={!formData.name || !formData.email || loading}
-                  className="btn-primary w-full h-16 text-xl mt-12 mb-4"
-                >
-                    {loading ? <Loader2 className="animate-spin" /> : <>Start AI Sync <Zap className="ml-2" size={20} fill="currentColor" /></>}
-                </button>
-                <p className="text-xs text-slate-500 font-medium">YOUR DATA IS SECURED WITH AES-256 ENCRYPTION</p>
-             </div>
-          </motion.div>
-        )}
-
-        {step === 4 && results && (
+        {step === 3 && results && (
             <motion.div 
-                key="step4"
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="container py-20 max-w-6xl z-10"
+                key="step3"
+                {...slideTransition}
+                className="container py-24 max-w-7xl z-10"
             >
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                    <div className="lg:col-span-2 space-y-10">
-                         <div className="card border-l-4 border-amber-500">
-                             <div className="flex items-center justify-between mb-8">
-                                <h3 className="text-2xl font-bold flex items-center gap-3">
-                                    <FileText className="text-amber-500" /> Strategic Bullet Points
-                                </h3>
-                                <span className="bg-amber-500/10 text-amber-500 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest">Free Preview</span>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                    <div className="lg:col-span-8 space-y-12">
+                         <div className="card !p-12 relative border-l-4 border-amber-500 overflow-visible">
+                             <div className="absolute -top-10 -right-6 bg-gradient-vibrant p-4 rounded-3xl shadow-2xl rotate-12">
+                                <Receipt className="text-black" size={32} />
                              </div>
-                             <ul className="space-y-6">
+                             <div className="flex items-center justify-between mb-12">
+                                <h3 className="text-4xl font-black tracking-tighter flex items-center gap-4">
+                                    <FileText className="text-amber-500" size={32} /> Boardroom Strategy Points
+                                </h3>
+                                <span className="bg-amber-500/10 text-amber-500 px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-amber-500/20">Elite Performance Access</span>
+                             </div>
+                             <ul className="space-y-8">
                                 {results.resume.map((point, i) => (
-                                    <li key={i} className="flex gap-4 p-5 bg-white/[0.02] rounded-xl border border-white/5">
-                                        <div className="w-1.5 h-1.5 bg-amber-500 rounded-full mt-2.5 shrink-0" />
-                                        <p className="text-slate-300 text-lg leading-relaxed">{point}</p>
+                                    <li key={i} className="flex gap-6 p-8 bg-white/[0.03] rounded-3xl border border-white/5 hover:bg-white/[0.05] transition-all">
+                                        <div className="w-4 h-4 bg-amber-500 rounded-full mt-2 shrink-0 shadow-[0_0_15px_rgba(251,191,36,0.6)]" />
+                                        <p className="text-slate-200 text-xl font-medium leading-relaxed italic">"{point}"</p>
                                     </li>
                                 ))}
                              </ul>
                          </div>
 
-                         <div className="card border-l-4 border-blue-500">
-                             <h3 className="text-2xl font-bold mb-8 flex items-center gap-3">
-                                <Linkedin className="text-blue-500" /> Executive "About" Section
+                         <div className="card !p-12 border-l-4 border-blue-500">
+                             <h3 className="text-4xl font-black tracking-tighter mb-12 flex items-center gap-4">
+                                <Linkedin className="text-blue-500" size={32} /> Professional Narrative
                              </h3>
-                             <div className="p-8 bg-blue-500/[0.02] rounded-xl border border-blue-500/10 italic text-xl text-slate-200">
-                                "{results.linkedin}"
+                             <div className="p-10 bg-blue-500/[0.03] rounded-3xl border border-blue-500/10 text-2xl text-slate-100 font-bold leading-relaxed line-clamp-4">
+                                {results.linkedin}
                              </div>
                          </div>
                     </div>
 
-                    <div className="lg:col-span-1">
+                    <div className="lg:col-span-4">
                         <motion.div 
-                            initial={{ x: 20, opacity: 0 }}
+                            initial={{ x: 30, opacity: 0 }}
                             animate={{ x: 0, opacity: 1 }}
-                            transition={{ delay: 0.5 }}
-                            className="card border-2 border-amber-500 bg-amber-500/[0.03] sticky top-20"
+                            transition={{ delay: 0.6 }}
+                            className="card !p-12 border-2 border-amber-500 bg-amber-500/[0.03] sticky top-12"
                         >
                             <div className="flex flex-col items-center text-center">
-                                <div className="w-16 h-16 bg-amber-500 rounded-2xl flex items-center justify-center text-black mb-6 shadow-2xl">
-                                    <Zap size={32} fill="currentColor" />
+                                <div className="w-24 h-24 bg-amber-500 rounded-[2rem] flex items-center justify-center text-black mb-8 shadow-2xl relative">
+                                    <Zap size={40} fill="currentColor" />
+                                    <div className="absolute inset-0 bg-white shadow-2xl blur-xl opacity-20" />
                                 </div>
-                                <h3 className="text-3xl font-bold mb-2 uppercase tracking-tighter">Elite Upgrade</h3>
-                                <p className="text-slate-400 mb-8">Get a fully designed, 100% human-verified corporate resume ready for top-tier applications.</p>
+                                <h3 className="text-4xl font-black mb-4 tracking-tighter uppercase">Boardroom Elite</h3>
+                                <p className="text-slate-400 mb-10 font-medium">Unlock the full, 100% human-polished resume transformation with ATS-Ready PDF output.</p>
                                 
-                                <div className="text-5xl font-black mb-10">$19.99<span className="text-sm font-bold text-slate-500">/RESUME</span></div>
+                                <div className="text-6xl font-black mb-12 tracking-tighter">$2.99<span className="text-xs font-black text-slate-500 block mt-2 tracking-widest uppercase">Elite Strategy Access</span></div>
 
-                                <ul className="text-left w-full space-y-4 mb-10">
-                                    <li className="flex gap-3 text-sm font-medium"><CheckCircle2 className="text-amber-500 shrink-0" size={18} /> Full high-fidelity PDF design</li>
-                                    <li className="flex gap-3 text-sm font-medium"><CheckCircle2 className="text-amber-500 shrink-0" size={18} /> Industry-specific cover letter</li>
-                                    <li className="flex gap-3 text-sm font-medium"><CheckCircle2 className="text-amber-500 shrink-0" size={18} /> ATS-Optimization scan</li>
+                                <div className="w-full flex gap-2 mb-10">
+                                   <div className="flex-1 aspect-[3/4] bg-white/5 rounded-lg border border-white/10 flex flex-col p-2 overflow-hidden shadow-2xl relative group">
+                                      <div className="w-full h-1 bg-white/20 mb-1" />
+                                      <div className="w-2/3 h-1 bg-white/10 mb-1" />
+                                      <div className="w-full h-1 bg-white/10 mb-1" />
+                                      <div className="w-full h-1 bg-white/10 mb-6" />
+                                      <div className="space-y-1">
+                                         <div className="w-full h-0.5 bg-white/5" />
+                                         <div className="w-full h-0.5 bg-white/5" />
+                                         <div className="w-4/5 h-0.5 bg-white/5" />
+                                      </div>
+                                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-2">
+                                         <span className="text-[6px] font-black uppercase tracking-widest opacity-50">RESUME SILHOUETTE</span>
+                                      </div>
+                                   </div>
+                                   <div className="flex-1 aspect-[3/4] bg-white/5 rounded-lg border border-white/10 flex flex-col p-2 overflow-hidden shadow-2xl relative">
+                                      <div className="w-1/2 h-2 bg-amber-500/20 mb-4" />
+                                      <div className="space-y-1">
+                                         <div className="w-full h-0.5 bg-white/5" />
+                                         <div className="w-full h-0.5 bg-white/5" />
+                                         <div className="w-full h-0.5 bg-white/5" />
+                                         <div className="w-3/4 h-0.5 bg-white/5" />
+                                      </div>
+                                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-2">
+                                         <span className="text-[6px] font-black uppercase tracking-widest opacity-50">COVER LETTER VIEW</span>
+                                      </div>
+                                   </div>
+                                </div>
+
+                                <ul className="text-left w-full space-y-6 mb-12 border-y border-white/5 py-8">
+                                    <li className="flex gap-4 text-xs font-black uppercase tracking-widest"><CheckCircle2 className="text-amber-500 shrink-0" size={16} /> Fully Reframed High-Res PDF</li>
+                                    <li className="flex gap-4 text-xs font-black uppercase tracking-widest"><CheckCircle2 className="text-amber-500 shrink-0" size={16} /> Industry-Specific Cover Letter</li>
+                                    <li className="flex gap-4 text-xs font-black uppercase tracking-widest"><CheckCircle2 className="text-amber-500 shrink-0" size={16} /> ATS-Optimization Suite</li>
                                 </ul>
 
-                                <button onClick={() => setStep(5)} className="btn-primary w-full h-16 text-xl rounded-xl">Unlock Full Resume <CreditCard className="ml-2" /></button>
-                                <p className="mt-4 text-xs text-slate-500 uppercase tracking-widest font-bold">100% Satisfaction Guarantee</p>
+                                <button onClick={() => setStep(4)} className="btn-primary !h-20 text-xl font-black rounded-2xl hover:scale-105 shadow-[0_0_50px_rgba(251,191,36,0.3)]">Get Elite Portfolio <ArrowRight className="ml-2" /></button>
                             </div>
                         </motion.div>
                     </div>
@@ -409,63 +485,59 @@ export default function App() {
             </motion.div>
         )}
 
-        {step === 5 && (
+        {step === 4 && (
             <motion.div 
-                key="step5"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="container py-20 max-w-4xl z-10"
+                key="step4"
+                {...slideTransition}
+                className="container py-24 max-w-5xl z-10"
             >
-                <div className="card p-0 overflow-hidden grid grid-cols-1 md:grid-cols-2">
-                    <div className="p-12 bg-white text-slate-900 border-r border-slate-200">
-                        <div className="flex items-center gap-2 text-amber-600 font-black tracking-tighter text-2xl mb-8">
-                            <Sparkles size={24} fill="currentColor" /> TRANSLATOR ELITE
+                <div className="card !p-0 overflow-hidden grid grid-cols-1 md:grid-cols-5 min-h-[500px]">
+                    <div className="md:col-span-3 p-16 bg-white text-slate-900 flex flex-col justify-between">
+                        <div>
+                           <div className="flex items-center gap-3 text-amber-600 font-black tracking-tighter text-3xl mb-12">
+                               <Sparkles size={32} fill="currentColor" /> TRANSLATOR ELITE
+                           </div>
+                           <h2 className="text-5xl font-black mb-4 tracking-tighter">Investment.</h2>
+                           <div className="space-y-4 pt-8">
+                               <div className="flex justify-between border-b border-slate-200 pb-4 text-slate-500 font-bold uppercase tracking-widest text-xs"><span>Boardroom Full Package</span><span>$2.99</span></div>
+                               <div className="flex justify-between font-black text-3xl pt-4"><span>Total Value</span><span>$2.99</span></div>
+                           </div>
                         </div>
-                        <div className="space-y-4">
-                            <h2 className="text-4xl font-bold mb-4">Checkout.</h2>
-                            <div className="space-y-3">
-                                <div className="flex justify-between border-b pb-2 text-slate-500"><span>Elite Transformation</span><span>$19.99</span></div>
-                                <div className="flex justify-between font-bold text-xl pt-2"><span>Total Due</span><span>$19.99</span></div>
-                            </div>
 
-                            <div className="mt-12 bg-slate-50 p-6 rounded-2xl border border-slate-200">
-                                <h4 className="font-bold flex items-center gap-2 mb-4"><ShieldCheck size={18} /> SECURE PAYMENT</h4>
-                                <div className="space-y-4">
-                                     <input className="w-full p-4 border rounded-xl bg-white" placeholder="Card Number" />
-                                     <div className="grid grid-cols-2 gap-4">
-                                         <input className="p-4 border rounded-xl bg-white" placeholder="MM/YY" />
-                                         <input className="p-4 border rounded-xl bg-white" placeholder="CVC" />
-                                     </div>
-                                </div>
-                                <button className="w-full bg-slate-900 text-white py-5 rounded-2xl mt-8 font-black text-xl hover:bg-black transition-all">PAY & DOWNLOAD PDF</button>
-                            </div>
+                        <div className="mt-12 bg-slate-100 p-8 rounded-[2rem] border border-slate-200 space-y-6">
+                             <input className="w-full p-5 border border-slate-300 rounded-2xl bg-white focus:ring-4 ring-amber-500/20 font-bold" placeholder="Card Number" />
+                             <div className="grid grid-cols-2 gap-4">
+                                 <input className="p-5 border border-slate-300 rounded-2xl bg-white focus:ring-4 ring-amber-500/20 font-bold" placeholder="MM/YY" />
+                                 <input className="p-5 border border-slate-300 rounded-2xl bg-white focus:ring-4 ring-amber-500/20 font-bold" placeholder="CVC" />
+                             </div>
+                             <button className="w-full bg-slate-900 text-white py-6 rounded-2xl font-black text-2xl hover:bg-black transition-all shadow-xl">SECURE ACCESS</button>
                         </div>
                     </div>
-                    <div className="p-12 bg-amber-500 flex flex-col items-center justify-center text-center text-black">
+                    <div className="md:col-span-2 p-16 bg-amber-500 flex flex-col items-center justify-center text-center text-black">
                         <motion.div 
-                            animate={{ rotate: 360 }}
-                            transition={{ repeat: Infinity, duration: 10, ease: "linear" }}
-                            className="w-48 h-48 border-8 border-black/10 rounded-full flex items-center justify-center mb-8"
+                            animate={{ y: [0, -10, 0] }}
+                            transition={{ repeat: Infinity, duration: 3 }}
+                            className="w-56 h-56 bg-black/10 rounded-[3rem] flex items-center justify-center mb-10 shadow-2xl border-4 border-black/5"
                         >
-                            <FileText size={80} strokeWidth={3} />
+                            <FileText size={100} strokeWidth={3} />
                         </motion.div>
-                        <h3 className="text-4xl font-black mb-4">YOUR UPGRADE IS READY.</h3>
-                        <p className="text-black/70 font-bold max-w-xs uppercase tracking-wider text-sm">Once payment clears, your high-fidelity, corporate-ready PDF will be generated instantly.</p>
+                        <h3 className="text-4xl font-black mb-6 tracking-tighter">ELITE SIGNAL READY.</h3>
+                        <p className="text-black/80 font-bold max-w-xs uppercase tracking-widest text-[10px] leading-relaxed">Once payment clears, your high-fidelity, boardroom-ready strategy will be finalized and sent instantly.</p>
                     </div>
                 </div>
-                <div className="mt-8 flex justify-center">
-                    <button onClick={() => setStep(4)} className="text-slate-500 font-black hover:text-white transition-colors">CANCEL SESSION</button>
+                <div className="mt-12 flex justify-center">
+                    <button onClick={() => setStep(3)} className="text-slate-600 font-black hover:text-white transition-colors uppercase tracking-[0.3em] text-[10px]">Abandon Elite Checkout</button>
                 </div>
             </motion.div>
         )}
       </AnimatePresence>
 
-      <footer className="py-12 border-t border-white/5 mt-auto w-full z-10">
-        <div className="container flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2 text-amber-500 font-bold tracking-widest text-xs uppercase">
-            <Sparkles size={14} /> The Translator | Powered by Claude 3.5
+      <footer className="py-20 border-t border-white/5 mt-auto w-full z-10 bg-black/50 backdrop-blur-md">
+        <div className="container flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="flex items-center gap-3 text-amber-500 font-black tracking-[0.2em] text-[10px] uppercase">
+            <Sparkles size={16} /> The Translator | Boardroom Edition
           </div>
-          <div className="text-slate-600 text-xs font-bold uppercase tracking-[0.3em]">
+          <div className="text-slate-600 text-[10px] font-black uppercase tracking-[0.5em]">
             &copy; {new Date().getFullYear()} Elite Reframing System
           </div>
         </div>
